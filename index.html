@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Retake</title>
+  <meta name="description" content="A screen recorder you direct out loud. Say “scratch that”, “zoom here” or “hide that” while you record, and get a finished, captioned video with no editing.">
+  <meta name="theme-color" content="#111113">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="src/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Retake home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="26" height="16" rx="2" fill="currentColor"/><path d="M3 11 26.5 4.2l1 3.6L4 14.6z" fill="#ffd60a"/><path d="m8 9.6 3.4 3.3M14 7.9l3.4 3.3M20 6.1l3.4 3.3" stroke="#111113" stroke-width="2.4"/></svg>
+      <span class="brand-name">RETAKE</span>
+    </a>
+    <span class="topbar-note" id="topbar-note">Edit by voice, while you record</span>
+  </header>
+
+  <main>
+    <!-- ============================================================ HOME -->
+    <section id="home" class="screen">
+      <div class="hero">
+        <p class="eyebrow">Screen recorder you direct out loud</p>
+        <h1>Say <q>scratch that.</q><br>It’s gone.</h1>
+        <p class="lede">Record your screen and talk as you normally would. When you fumble, say <q>scratch that</q>. When something needs a closer look, say <q>zoom here</q>. Paste an API key by mistake? Say <q>hide that</q>. Stop recording and the video is already edited.</p>
+        <div class="hero-actions">
+          <button class="btn rec" id="record" type="button"><span class="tally" aria-hidden="true"></span>Record a take</button>
+          <button class="btn ghost" id="try-sample" type="button">Try the sample take</button>
+          <button class="btn ghost" id="open-last" type="button" hidden>Open last take</button>
+        </div>
+        <div class="setup">
+          <label class="field">
+            <span>I’ll be speaking</span>
+            <select id="lang">
+              <option value="en-IN">English (India)</option>
+              <option value="en-US">English (US)</option>
+              <option value="en-GB">English (UK)</option>
+              <option value="hi-IN">Hindi / Hinglish</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="camera" checked> Show me in a corner (camera)</label>
+          <label class="check"><input type="checkbox" id="system-audio"> Also record the tab’s or computer’s sound</label>
+        </div>
+        <p class="note warn" id="support-note" hidden></p>
+      </div>
+
+      <div class="vocab">
+        <div class="slate-head">
+          <span class="clapper" aria-hidden="true"></span>
+          <h2>The director’s vocabulary</h2>
+          <p>Say these while you record. Everything else you say becomes captions.</p>
+        </div>
+        <ol class="vocab-grid" id="vocab"></ol>
+        <div class="auto">
+          <h3>And without being asked</h3>
+          <ul>
+            <li><strong>Dead air trimmed.</strong> Long silences where nothing happens on screen are shortened. Silences where you’re typing are kept.</li>
+            <li><strong>Captions.</strong> Burned into the video, and as an .srt file.</li>
+            <li><strong>YouTube chapters.</strong> Ready to paste into the description.</li>
+            <li><strong>Private.</strong> Recording and editing happen in this browser. Your video is never uploaded.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ RECORDING -->
+    <section id="rec" class="screen" hidden>
+      <div class="hud" id="hud">
+        <div class="hud-top">
+          <span class="rec-pill"><span class="tally live" aria-hidden="true"></span>REC</span>
+          <span class="hud-time" id="hud-time">00:00</span>
+        </div>
+        <div class="meter" aria-hidden="true"><span id="hud-level"></span></div>
+        <p class="hud-heard" id="hud-heard">Listening…</p>
+        <p class="hud-interim" id="hud-interim"></p>
+        <ol class="hud-log" id="hud-log"></ol>
+        <div class="hud-actions">
+          <button class="btn stop" id="stop" type="button"><span class="square" aria-hidden="true"></span>Stop and edit</button>
+          <button class="btn ghost small" id="pop-out" type="button">Float this slate</button>
+        </div>
+        <p class="hud-tip" id="hud-tip">Switch to what you’re recording. Retake keeps listening.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ EDITOR -->
+    <section id="edit" class="screen" hidden>
+      <div class="edit-head">
+        <div>
+          <p class="eyebrow" id="take-kind">Your take</p>
+          <h1 class="saved" id="saved">Retake saved you 0s</h1>
+        </div>
+        <ul class="chips" id="chips"></ul>
+      </div>
+      <p class="note warn" id="edit-warn" hidden></p>
+
+      <div class="edit-grid">
+        <div class="stage">
+          <div class="screen-wrap">
+            <canvas id="screen" width="1280" height="720" aria-label="Preview of the edited video"></canvas>
+            <button class="big-play" id="big-play" type="button" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+          </div>
+          <div class="transport">
+            <button class="icon-btn" id="play" type="button" aria-label="Play"><svg viewBox="0 0 24 24"><path id="play-icon" d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+            <span class="tc" id="tc">00:00 / 00:00</span>
+            <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Position in the edited video">
+            <div class="ab" role="group" aria-label="Compare">
+              <button type="button" id="ab-edit" aria-pressed="true">Retake</button>
+              <button type="button" id="ab-raw" aria-pressed="false">Raw take</button>
+            </div>
+          </div>
+
+          <div class="timeline-wrap">
+            <div class="timeline-label"><span>The raw take, and what Retake did to it</span><span class="tc" id="raw-len"></span></div>
+            <div class="timeline" id="timeline" role="slider" aria-label="Raw take timeline" tabindex="0">
+              <div class="film" id="film"></div>
+              <div class="bands" id="bands"></div>
+              <div class="playhead" id="playhead"></div>
+            </div>
+            <ul class="legend">
+              <li><i class="k cut"></i>Cut</li>
+              <li><i class="k air"></i>Dead air</li>
+              <li><i class="k speed"></i>Fast-forward</li>
+              <li><i class="k zoom"></i>Zoom</li>
+              <li><i class="k blur"></i>Hidden</li>
+              <li><i class="k spot"></i>Spotlight</li>
+              <li><i class="k chap"></i>Chapter</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="side">
+          <div class="tabs" role="tablist">
+            <button role="tab" id="tab-notes" aria-selected="true" aria-controls="panel-notes" type="button">Director’s notes</button>
+            <button role="tab" id="tab-look" aria-selected="false" aria-controls="panel-look" type="button">Settings</button>
+            <button role="tab" id="tab-words" aria-selected="false" aria-controls="panel-words" type="button">Transcript</button>
+            <button role="tab" id="tab-export" aria-selected="false" aria-controls="panel-export" type="button">Export</button>
+          </div>
+
+          <div class="panel" id="panel-notes" role="tabpanel">
+            <p class="panel-intro">Every direction Retake heard. Switch one off to undo it.</p>
+            <ol class="notes" id="notes"></ol>
+          </div>
+
+          <div class="panel" id="panel-look" role="tabpanel" hidden>
+            <label class="row"><span>Trim dead air</span><input type="checkbox" id="opt-dead" checked></label>
+            <label class="row"><span>Fast-forward speed</span>
+              <select id="opt-speed"><option value="2">2×</option><option value="4" selected>4×</option><option value="8">8×</option></select></label>
+            <label class="row"><span>Zoom strength</span>
+              <select id="opt-zoom"><option value="1.5">1.5×</option><option value="2" selected>2×</option><option value="2.5">2.5×</option></select></label>
+            <label class="row"><span>Burn in captions</span><input type="checkbox" id="opt-captions" checked></label>
+            <label class="row"><span>Caption size</span><input type="range" id="opt-capsize" min="30" max="60" value="42"></label>
+            <label class="row"><span>Show fast-forward badge</span><input type="checkbox" id="opt-badge" checked></label>
+            <label class="row"><span>“Edited by voice” mark</span><input type="checkbox" id="opt-mark"></label>
+            <div class="cam-opts" id="cam-opts">
+              <h3 class="opt-head">Camera bubble</h3>
+              <label class="row"><span>Show camera</span><input type="checkbox" id="opt-cam" checked></label>
+              <label class="row"><span>Shape</span>
+                <select id="opt-camshape"><option value="circle" selected>Circle</option><option value="rounded">Rounded square</option></select></label>
+              <label class="row"><span>Corner</span>
+                <select id="opt-camcorner"><option value="br" selected>Bottom right</option><option value="bl">Bottom left</option><option value="tr">Top right</option><option value="tl">Top left</option></select></label>
+              <label class="row"><span>Size</span><input type="range" id="opt-camsize" min="16" max="36" value="26"></label>
+              <p class="small-print">Say “big camera” to fill the frame with your face, “small camera” to send it back, “hide camera” when it covers something.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-words" role="tabpanel" hidden>
+            <p class="panel-intro">Struck-through lines were cut. Highlighted words were directions.</p>
+            <ol class="words" id="words"></ol>
+          </div>
+
+          <div class="panel" id="panel-export" role="tabpanel" hidden>
+            <button class="btn rec wide" id="export" type="button">Export video</button>
+            <p class="small-print" id="export-note">Renders in real time in this tab. Keep the tab open until it finishes.</p>
+            <div class="export-progress" id="export-progress" hidden>
+              <div class="bar"><span id="export-bar"></span></div>
+              <div class="export-row"><span id="export-pct">0%</span><button class="btn ghost small" id="export-cancel" type="button">Cancel</button></div>
+            </div>
+            <a class="btn wide" id="download-video" hidden>Download video</a>
+            <div class="extras">
+              <h3>For YouTube and the web</h3>
+              <button class="btn ghost small" id="dl-srt" type="button">Captions .srt</button>
+              <button class="btn ghost small" id="dl-vtt" type="button">Captions .vtt</button>
+              <button class="btn ghost small" id="dl-txt" type="button">Transcript .txt</button>
+              <label class="ytc"><span>YouTube chapters</span><textarea id="yt-chapters" rows="5" readonly></textarea></label>
+              <p class="small-print" id="yt-note"></p>
+              <button class="btn ghost small" id="copy-chapters" type="button">Copy chapters</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
